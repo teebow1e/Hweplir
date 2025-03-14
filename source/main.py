@@ -9,8 +9,8 @@ import utils, ctftime, Buttons
 ### Need .env with SERVER_ID and TOKEN
 SERVER_ID = discord.Object(id=os.getenv("SERVER_ID"))
 BOT_TOKEN = os.getenv("TOKEN")
-VIEW_ALL_CTF_ROLEID = None ### Need A <<<VIEW_ALL_CTF>>> ROLE ID and ASSIGN that role to bot
-LOG_CHANNELID = None ###Need LOG CHANNEL ID if want to enable logging
+VIEW_ALL_CTF_ROLEID = 1350174998941274244 ### Need A <<<VIEW_ALL_CTF>>> ROLE ID and ASSIGN that role to bot
+LOG_CHANNELID = 1350174933954859085 # Need LOG CHANNEL ID if want to enable logging
 
 class MyBot(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -122,13 +122,13 @@ async def reg(ctx: discord.Interaction, ctfid: int):
     if reg:
         name, endtime, embedVar = ctftime.getCTF(ctfid, creating=True)
         if embedVar != False:
-            #Create role
+            # Create role
             allctf_role = ctx.guild.get_role(VIEW_ALL_CTF_ROLEID)
             name = name.strip()
-            role = await ctx.guild.create_role(name="<"+name+">", mentionable=True)
+            role = await ctx.guild.create_role(name=name.lower(), mentionable=False)
             await role.edit(position=1)
 
-            #Create category + set perms
+            # Create category + set perms
             cate = await ctx.guild.create_category(name=name)
             await cate.set_permissions(role, read_messages=True)
             await cate.set_permissions(allctf_role, read_messages=True)
@@ -148,9 +148,12 @@ async def reg(ctx: discord.Interaction, ctfid: int):
                 json.dump(ctf_data, db)
 
             #Create remaining channels
+            await cate.create_text_channel(name="general")
             await cate.create_text_channel(name="web")
             await cate.create_text_channel(name="crypto")
-            await cate.create_text_channel(name="pwn-rev")
+            await cate.create_text_channel(name="pwn")
+            await cate.create_text_channel(name="rev")
+            await cate.create_text_channel(name="forensics")
 
             await ctx.edit_original_response(embed=utils.create_embed(title='Xong!', description='Đã tạo channel cho <***'+name+'***>', color = 0x03AC13))
             # LOG
