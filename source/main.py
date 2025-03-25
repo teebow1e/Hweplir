@@ -268,7 +268,7 @@ async def hidectf(ctx: discord.Interaction):
         ctf_data = json.load(db)
     update = False
     for ctf in ctf_data:
-        logging.info("current time is: " + int(time()))
+        logging.info(f"current time is: {int(time())}")
         logging.info(ctf)
         if ctf_data[ctf]['archived'] == False:
             logging.info(f"[{ctf}] archived is False")
