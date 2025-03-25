@@ -289,7 +289,7 @@ async def hidectf(ctx: discord.Interaction):
             await LOG_CHANNEL.send("Request to hide some CTFs has been fulfilled (requested by {})".format(ctx.user.name))
     else:
         if LOG_CHANNELID: 
-            await LOG_CHANNEL.send("Request to hide some CTFs has NOT been fulfilled (reason: no CTF has reached endtime})".format(ctx.user.name))
+            await LOG_CHANNEL.send("Request to hide some CTFs has NOT been fulfilled (reason: no CTF has reached endtime)".format(ctx.user.name))
         
 
 @bot.tree.command(name="admin-reg_special")
