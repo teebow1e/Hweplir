@@ -29,15 +29,16 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 
 Error_embed = utils.create_embed(title='Error', description="can't see shit", color = 0x000000)
 
-LOG_CHANNEL = bot.get_channel(LOG_CHANNELID)
+LOG_CHANNEL = None
 
 ### WHEN JOIN
 @bot.event
 async def on_ready():
+    global LOG_CHANNEL
     print("{0.user} is running!".format(bot))
     if LOG_CHANNELID: 
-        log = bot.get_channel(LOG_CHANNELID)
-        await log.send("BOT RESTARTED")
+        LOG_CHANNEL = bot.get_channel(LOG_CHANNELID)
+        await LOG_CHANNEL.send("Bot restarted")
 
 
 ### SLASH commands tree
