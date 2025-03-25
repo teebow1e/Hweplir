@@ -51,6 +51,8 @@ async def on_ready():
     if LOG_CHANNELID: 
         LOG_CHANNEL = bot.get_channel(LOG_CHANNELID)
         await LOG_CHANNEL.send("Bot restarted")
+    if not bot.status_task.is_running():
+        bot.status_task.start()
 
 
 ### SLASH commands tree
