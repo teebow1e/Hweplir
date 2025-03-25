@@ -175,10 +175,6 @@ async def reg(ctx: discord.Interaction, ctfid: int):
         try:
             start_time = datetime.datetime.fromtimestamp(startTime, tz=UTC_PLUS_7_TZ)
             end_time = datetime.datetime.fromtimestamp(endtime-604800, tz=UTC_PLUS_7_TZ)
-            print(start_time)
-            print(end_time)
-            print(startTime)
-            print(endtime-604800)
             event = await ctx.guild.create_scheduled_event(
                 name=name,
                 description=f"We are testing the creation of event {name}",
