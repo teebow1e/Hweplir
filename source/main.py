@@ -349,7 +349,7 @@ async def regspecial(ctx: discord.Interaction, name: str, day: int):
     # LOG
     if LOG_CHANNELID: 
         log = bot.get_channel(LOG_CHANNELID)
-        await log.send("{} has manually created ***{}***".format(ctx.user.name + '#' + ctx.user.discriminator, name))
+        await log.send("{} has manually created ***{}***".format(ctx.user.name, name))
     
 #Auto HIDE old CTF
     update = False
@@ -409,13 +409,13 @@ async def delete(ctx: discord.Interaction, search_id: str):
             # LOG
             if LOG_CHANNELID: 
                 log = bot.get_channel(LOG_CHANNELID)
-                await log.send("{} has deleted <***{}***>".format(ctx.user.name + '#' + ctx.user.discriminator, target['name']))
+                await log.send("{} has deleted <***{}***>".format(ctx.user.name, target['name']))
             else:
                 await cate.edit(name="[UNLISTED] " + cate.name)
                 # LOG
                 if LOG_CHANNELID: 
                     log = bot.get_channel(LOG_CHANNELID)
-                    await log.send("{} has unlinked <***{}***> from the database".format(ctx.user.name + '#' + ctx.user.discriminator, target['name']))
+                    await log.send("{} has unlinked <***{}***> from the database".format(ctx.user.name, target['name']))
             with open('ctf.json', 'w') as db:
                 json.dump(ctf_data, db)
 
@@ -478,7 +478,7 @@ async def addctf(ctx: discord.Interaction, cate_id: str = "0"):
         # LOG
         if LOG_CHANNELID: 
             log = bot.get_channel(LOG_CHANNELID)
-            await log.send("{} has manually listed <***{}***>".format(ctx.user.name + '#' + ctx.user.discriminator, cate.name))
+            await log.send("{} has manually listed <***{}***>".format(ctx.user.name, cate.name))
 
 
 
