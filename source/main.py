@@ -6,6 +6,7 @@ from time import time
 from typing import Literal
 from dotenv import load_dotenv
 import utils, ctftime, Buttons
+import status
 
 load_dotenv()
 
@@ -26,13 +27,9 @@ class MyBot(discord.Client):
         self.tree.copy_global_to(guild=SERVER_ID)
         await self.tree.sync(guild=SERVER_ID)
 
-    @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:
-        """
-        Setup the game status task of the bot.
-        """
-        statuses = ["with you!", "with Krypton!", "with humans!"]
-        await self.change_presence(activity=discord.Game(random.choice(statuses)))
+        activity = discord.Activity(name='bkseg-ing', state=random.choice(status.statuses), type=discord.ActivityType.custom)
+        await self.change_presence(status=discord.Status.idle, activity=activity)
 
 intents = discord.Intents.default()
 intents.message_content = True
