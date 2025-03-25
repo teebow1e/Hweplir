@@ -272,16 +272,14 @@ async def hidectf(ctx: discord.Interaction):
     update = False
     for ctf in ctf_data:
         if ctf_data[ctf]['archived'] == False:
-            print(f"[{ctf}] archived is False")
             if ctf_data[ctf]['endtime'] < int(time()):
-                print(f"[{ctf}] its endtime is smaller than current time") 
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
                 await cate.set_permissions(ctx.guild.default_role, read_messages=False)
                 ctf_data[ctf]['archived'] = True
-                await LOG_CHANNEL.send("{} has been hidden (request created by {})".format(ctf_data[ctf]['name'], ctx.user.name))
+                await LOG_CHANNEL.send("{} has been hidden".format(ctf_data[ctf]['name'], ctx.user.name))
                 update = True
             else:
-                print(f"[{ctf['name']}] its endtime ({ctf['endtime']}) is bigger than current time") 
+                print(f"[{ctf_data[ctf]['name']}] its endtime ({ctf_data[ctf]['endtime']}) is bigger than current time") 
     if update:
         with open('ctf.json', 'w') as db:
             json.dump(ctf_data, db)
