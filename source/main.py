@@ -125,7 +125,7 @@ async def reg(ctx: discord.Interaction, ctfid: int):
 #CREATE
     if reg:
         # Endtime here has already been added 1 week - which mean 1 week more than the endtime
-        name, endtime, embedVar = ctftime.getCTF(ctfid, creating=True)
+        name, startTime, endtime, embedVar = ctftime.getCTF(ctfid, creating=True)
         if embedVar != False:
             # Create role
             allctf_role = ctx.guild.get_role(VIEW_ALL_CTF_ROLEID)
@@ -147,34 +147,12 @@ async def reg(ctx: discord.Interaction, ctfid: int):
             except discord.errors.Forbidden:
                 await ctx.edit_original_response(embed=utils.create_embed(title='Oops...', description='Error: Please make sure I have view permission.', color = 0xFEE12B))
 
-#CREATE Discord Event
-            try:
-                # Get the current time
-                start_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)  # Event starts in 1 hour
-                end_time = start_time + datetime.timedelta(hours=2)  # Event lasts 2 hours
-
-                # Create the event
-                event = await ctx.guild.create_scheduled_event(
-                    name=name,
-                    description="An awesome external event created by the bot!",
-                    start_time=start_time,
-                    end_time=end_time,
-                    location="Somewhere out there",  # External location
-                    entity_type=discord.EntityType.external
-                )
-
-                await ctx.send(f"Event '{name}' created successfully! Event ID: {event.id}")
-
-            except Exception as e:
-                await ctx.send(f"An error occurred: {str(e)}")
-
-#WRITE data
+#WRITE data to JSON and Create remaining channels
             ctf_data['0']['infom'] += 1
             ctf_data[ctf_data['0']['infom']] = {'ctftimeid': ctfid, 'role': role.id, 'cate': cate.id, 'name': name, 'infom': msg.id, 'channel': event_info_channel.id, 'endtime': endtime, 'archived': False}
             with open('ctf.json', 'w') as db:
                 json.dump(ctf_data, db)
 
-            #Create remaining channels
             await cate.create_text_channel(name="general")
             await cate.create_text_channel(name="web")
             await cate.create_text_channel(name="crypto")
@@ -189,6 +167,24 @@ async def reg(ctx: discord.Interaction, ctfid: int):
                 await log.send("{} has created <***{}***>".format(ctx.user.name, name))
         else:
             await ctx.edit_original_response(embed=Error_embed)
+
+#CREATE Discord Event
+        try:
+            start_time = datetime.datetime.fromtimestamp(startTime)
+            end_time = datetime.datetime.fromtimestamp(endtime-604800)
+            event = await ctx.guild.create_scheduled_event(
+                name=name,
+                description=f"We are testing the creation of event {name}",
+                start_time=start_time,
+                end_time=end_time,
+                location="SoICT, B1-403",
+                image=discord.utils.MISSING,
+                entity_type=discord.EntityType.external,
+                privacy_level=discord.PrivacyLevel.guild_only,
+            )
+            await ctx.send(f"Event '{name}' created successfully! Event ID: {event.id}")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {str(e)}")
 
 #Auto HIDE old CTF
     update = False
@@ -239,7 +235,7 @@ async def regacc(ctx: discord.Interaction, username: str, password: str, cate_id
             raise Exception("Nothing found")
 
 #RESEND info 
-        name, endtime, embedVar = ctftime.getCTF(target['ctftimeid'], creating=True, username=username, password=password)
+        name, startTime, endtime, embedVar = ctftime.getCTF(target['ctftimeid'], creating=True, username=username, password=password)
         if not embedVar:
             raise Exception("404")
         channel = bot.get_channel(target['channel'])
