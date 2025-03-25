@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-import os, json, logging
+import os, json, logging, datetime
 from time import time
 from typing import Literal
 from dotenv import load_dotenv
@@ -146,6 +146,27 @@ async def reg(ctx: discord.Interaction, ctfid: int):
                 await msg.pin()
             except discord.errors.Forbidden:
                 await ctx.edit_original_response(embed=utils.create_embed(title='Oops...', description='Error: Please make sure I have view permission.', color = 0xFEE12B))
+
+#CREATE Discord Event
+            try:
+                # Get the current time
+                start_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)  # Event starts in 1 hour
+                end_time = start_time + datetime.timedelta(hours=2)  # Event lasts 2 hours
+
+                # Create the event
+                event = await ctx.guild.create_scheduled_event(
+                    name=name,
+                    description="An awesome external event created by the bot!",
+                    start_time=start_time,
+                    end_time=end_time,
+                    location="Somewhere out there",  # External location
+                    entity_type=discord.EntityType.external
+                )
+
+                await ctx.send(f"Event '{name}' created successfully! Event ID: {event.id}")
+
+            except Exception as e:
+                await ctx.send(f"An error occurred: {str(e)}")
 
 #WRITE data
             ctf_data['0']['infom'] += 1
