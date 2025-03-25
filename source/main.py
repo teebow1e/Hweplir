@@ -3,14 +3,17 @@ from discord import app_commands
 import os, json, logging
 from time import time
 from typing import Literal
+from dotenv import load_dotenv
 
 import utils, ctftime, Buttons
 
+load_dotenv()
+
 ### Need .env with SERVER_ID and TOKEN
-SERVER_ID = discord.Object(id=os.getenv("SERVER_ID"))
+SERVER_ID = discord.Object(id=int(os.getenv("SERVER_ID")))
 BOT_TOKEN = os.getenv("TOKEN")
-VIEW_ALL_CTF_ROLEID = 1350174998941274244 ### Need A <<<VIEW_ALL_CTF>>> ROLE ID and ASSIGN that role to bot
-LOG_CHANNELID = 1350174933954859085 # Need LOG CHANNEL ID if want to enable logging
+VIEW_ALL_CTF_ROLEID = int(os.getenv("VIEW_ALL_CTF_ROLEID"))
+LOG_CHANNELID = int(os.getenv("LOG_CHANNELID"))
 
 class MyBot(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -26,7 +29,7 @@ intents.message_content = True
 bot = MyBot(intents=intents)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
-Error_embed = utils.create_embed(title='Error', description='Không thấy j hết...', color = 0x000000)
+Error_embed = utils.create_embed(title='Error', description="can't see shit", color = 0x000000)
 
 ### WHEN JOIN
 @bot.event
