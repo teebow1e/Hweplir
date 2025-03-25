@@ -134,16 +134,17 @@ async def reg(ctx: discord.Interaction, ctfid: int):
             await cate.set_permissions(allctf_role, read_messages=True)
 
             #Send information
-            general = await cate.create_text_channel(name=name)
+            event_info_channel = await cate.create_text_channel(name=name)
+            await event_info_channel.set_permissions(ctx.guild.default_role, send_messages=False)
             try:
-                msg = await general.send(embed=embedVar)
+                msg = await event_info_channel.send(embed=embedVar)
                 await msg.pin()
             except discord.errors.Forbidden:
                 await ctx.edit_original_response(embed=utils.create_embed(title='Oops...', description='Error: Please make sure I have view permission.', color = 0xFEE12B))
 
 #WRITE data
             ctf_data['0']['infom'] += 1
-            ctf_data[ctf_data['0']['infom']] = {'ctftimeid': ctfid, 'role': role.id, 'cate': cate.id, 'name': name, 'infom': msg.id, 'channel': general.id, 'endtime': endtime, 'archived': False}
+            ctf_data[ctf_data['0']['infom']] = {'ctftimeid': ctfid, 'role': role.id, 'cate': cate.id, 'name': name, 'infom': msg.id, 'channel': event_info_channel.id, 'endtime': endtime, 'archived': False}
             with open('ctf.json', 'w') as db:
                 json.dump(ctf_data, db)
 
