@@ -27,6 +27,7 @@ class MyBot(discord.Client):
         self.tree.copy_global_to(guild=SERVER_ID)
         await self.tree.sync(guild=SERVER_ID)
 
+    @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:
         activity = discord.Activity(name='bkseg-ing', state=random.choice(status.statuses), type=discord.ActivityType.custom)
         await self.change_presence(status=discord.Status.idle, activity=activity)
