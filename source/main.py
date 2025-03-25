@@ -4,12 +4,10 @@ import os, json, logging
 from time import time
 from typing import Literal
 from dotenv import load_dotenv
-
 import utils, ctftime, Buttons
 
 load_dotenv()
 
-### Need .env with SERVER_ID and TOKEN
 SERVER_ID = discord.Object(id=int(os.getenv("SERVER_ID")))
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 VIEW_ALL_CTF_ROLEID = int(os.getenv("VIEW_ALL_CTF_ROLEID"))
@@ -163,7 +161,7 @@ async def reg(ctx: discord.Interaction, ctfid: int):
             # LOG
             if LOG_CHANNELID: 
                 log = bot.get_channel(LOG_CHANNELID)
-                await log.send("{} has created <***{}***>".format(ctx.user.name + '#' + ctx.user.discriminator, name))
+                await log.send("{} has created <***{}***>".format(ctx.user.name, name))
         else:
             await ctx.edit_original_response(embed=Error_embed)
 
@@ -226,7 +224,7 @@ async def regacc(ctx: discord.Interaction, username: str, password: str, cate_id
         # LOG
         if LOG_CHANNELID: 
             log = bot.get_channel(LOG_CHANNELID)
-            await log.send("{} has updated login info for <***{}***>".format(ctx.user.name + '#' + ctx.user.discriminator, target['name']))
+            await log.send("{} has updated login info for ***{}***".format(ctx.user.name, target['name']))
     except:
         await ctx.edit_original_response(embed=Error_embed)
             
@@ -253,15 +251,13 @@ async def list(ctx: discord.Interaction, order: Literal['Cũ nhất', 'Mới nh�
 async def toggle(ctx: discord.Interaction, role: discord.Role):
     """Toggle ẩn/hiện channel thảo luận của một giải CTF trong server"""
     await ctx.response.send_message(embed=utils.create_embed(title='Đợi chút...', color = 0xFEE12B),ephemeral=True)
-    if role.name.startswith("<"):
-        if role in ctx.user.roles:
-            await ctx.user.remove_roles(role)
-            await ctx.edit_original_response(embed=utils.create_embed(title='Xong!', description='Đã ẩn ***'+role.name+'*** cho bạn!', color = 0x03AC13))
-        else:
-            await ctx.user.add_roles(role)
-            await ctx.edit_original_response(embed=utils.create_embed(title='Xong!', description='Đã hiện ***'+role.name+'*** cho bạn!', color = 0x03AC13))
+    # Add role logic
+    if role in ctx.user.roles:
+        await ctx.user.remove_roles(role)
+        await ctx.edit_original_response(embed=utils.create_embed(title='Xong!', description='Đã ẩn ***'+role.name+'*** cho bạn!', color = 0x03AC13))
     else:
-        await ctx.edit_original_response(embed=utils.create_embed(title='Oops...', description="Role không hợp lệ", color = 0xFEE12B))
+        await ctx.user.add_roles(role)
+        await ctx.edit_original_response(embed=utils.create_embed(title='Xong!', description='Đã hiện ***'+role.name+'*** cho bạn!', color = 0x03AC13))
 
 
 @bot.tree.command(name="admin-hide")
@@ -272,6 +268,7 @@ async def hidectf(ctx: discord.Interaction):
         ctf_data = json.load(db)
     update = False
     for ctf in ctf_data:
+        
         if ctf_data[ctf]['archived'] == False:
             if ctf_data[ctf]['endtime'] < int(time()):
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
@@ -284,7 +281,7 @@ async def hidectf(ctx: discord.Interaction):
         # LOG
         if LOG_CHANNELID: 
             log = bot.get_channel(LOG_CHANNELID)
-            await log.send("{} has manually hide some CTFs".format(ctx.user.name + '#' + ctx.user.discriminator))
+            await log.send("{} has manually hide some CTFs".format(ctx.user.name))
         
 
 @bot.tree.command(name="admin-reg_special")
@@ -323,11 +320,13 @@ async def regspecial(ctx: discord.Interaction, name: str, day: int):
     # LOG
     if LOG_CHANNELID: 
         log = bot.get_channel(LOG_CHANNELID)
-        await log.send("{} has manually created <***{}***>".format(ctx.user.name + '#' + ctx.user.discriminator, name))
+        await log.send("{} has manually created ***{}***".format(ctx.user.name + '#' + ctx.user.discriminator, name))
     
 #Auto HIDE old CTF
     update = False
     for ctf in ctf_data:
+        logging.info("current time is: " + int(time()))
+        logging.info(ctf)
         if ctf_data[ctf]['archived'] == False:
             if ctf_data[ctf]['endtime'] < int(time()):
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
