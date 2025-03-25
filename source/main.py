@@ -8,6 +8,9 @@ import utils, ctftime, Buttons
 
 load_dotenv()
 
+UTC_PLUS_7_TZ = datetime.timezone(datetime.timedelta(hours=7))
+
+
 SERVER_ID = discord.Object(id=int(os.getenv("SERVER_ID")))
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 VIEW_ALL_CTF_ROLEID = int(os.getenv("VIEW_ALL_CTF_ROLEID"))
@@ -170,8 +173,8 @@ async def reg(ctx: discord.Interaction, ctfid: int):
 
 #CREATE Discord Event
         try:
-            start_time = datetime.datetime.fromtimestamp(startTime)
-            end_time = datetime.datetime.fromtimestamp(endtime-604800)
+            start_time = datetime.datetime.fromtimestamp(startTime, tz=UTC_PLUS_7_TZ)
+            end_time = datetime.datetime.fromtimestamp(endtime-604800, tz=UTC_PLUS_7_TZ)
             print(start_time)
             print(end_time)
             print(startTime)
