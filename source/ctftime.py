@@ -59,7 +59,7 @@ def getCTF(ctftime_id, creating = False, username = None, password = None):
 
   embedVar = utils.create_embed(title=data['title'], description=data['url'], fields=ctf_fields, values=ctf_fieldsinfo, footer=data['ctftime_url'], thumbnail = logo, color = 0xd50000)
   if creating:
-    return data['title'], end+1209600, embedVar #archive after 2 weeks
+    return data['title'], end+604800, embedVar # archive after 1 weeks
   else:
     return embedVar
 

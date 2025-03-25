@@ -29,6 +29,8 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 
 Error_embed = utils.create_embed(title='Error', description="can't see shit", color = 0x000000)
 
+LOG_CHANNEL = bot.get_channel(LOG_CHANNELID)
+
 ### WHEN JOIN
 @bot.event
 async def on_ready():
@@ -121,6 +123,7 @@ async def reg(ctx: discord.Interaction, ctfid: int):
 
 #CREATE
     if reg:
+        # Endtime here has already been added 1 week - which mean 1 week more than the endtime
         name, endtime, embedVar = ctftime.getCTF(ctfid, creating=True)
         if embedVar != False:
             # Create role
@@ -266,12 +269,8 @@ async def hidectf(ctx: discord.Interaction):
     await ctx.response.send_message(content="Hiding old CTF... Please wait", ephemeral=True)
     with open('ctf.json', 'r') as db:
         ctf_data = json.load(db)
-    print("open ctf_data complete")
-    print(ctf_data)
     update = False
     for ctf in ctf_data:
-        print(f"current time is: {int(time())}")
-        print(ctf)
         if ctf_data[ctf]['archived'] == False:
             print(f"[{ctf}] archived is False")
             if ctf_data[ctf]['endtime'] < int(time()):
@@ -279,16 +278,19 @@ async def hidectf(ctx: discord.Interaction):
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
                 await cate.set_permissions(ctx.guild.default_role, read_messages=False)
                 ctf_data[ctf]['archived'] = True
+                await LOG_CHANNEL.send("{} has been hidden (request created by {})".format(ctf_data[ctf]['name'], ctx.user.name))
                 update = True
             else:
-                print(f"[{ctf}] its endtime is bigger than current time") 
+                print(f"[{ctf['name']}] its endtime ({ctf['endtime']}) is bigger than current time") 
     if update:
         with open('ctf.json', 'w') as db:
             json.dump(ctf_data, db)
         # LOG
         if LOG_CHANNELID: 
-            log = bot.get_channel(LOG_CHANNELID)
-            await log.send("{} has manually hide some CTFs".format(ctx.user.name))
+            await LOG_CHANNEL.send("Request to hide some CTFs has been fulfilled (requested by {})".format(ctx.user.name))
+    else:
+        if LOG_CHANNELID: 
+            await LOG_CHANNEL.send("Request to hide some CTFs has NOT been fulfilled (reason: no CTF has reached endtime})".format(ctx.user.name))
         
 
 @bot.tree.command(name="admin-reg_special")
