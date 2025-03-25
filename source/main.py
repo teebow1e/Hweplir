@@ -11,7 +11,7 @@ load_dotenv()
 
 ### Need .env with SERVER_ID and TOKEN
 SERVER_ID = discord.Object(id=int(os.getenv("SERVER_ID")))
-BOT_TOKEN = os.getenv("TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 VIEW_ALL_CTF_ROLEID = int(os.getenv("VIEW_ALL_CTF_ROLEID"))
 LOG_CHANNELID = int(os.getenv("LOG_CHANNELID"))
 
