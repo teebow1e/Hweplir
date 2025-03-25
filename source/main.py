@@ -266,6 +266,8 @@ async def hidectf(ctx: discord.Interaction):
     await ctx.response.send_message(content="Hiding old CTF... Please wait", ephemeral=True)
     with open('ctf.json', 'r') as db:
         ctf_data = json.load(db)
+    logging.info("open ctf_data complete")
+    logging.info(ctf_data)
     update = False
     for ctf in ctf_data:
         logging.info(f"current time is: {int(time())}")
