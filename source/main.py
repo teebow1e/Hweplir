@@ -172,6 +172,10 @@ async def reg(ctx: discord.Interaction, ctfid: int):
         try:
             start_time = datetime.datetime.fromtimestamp(startTime)
             end_time = datetime.datetime.fromtimestamp(endtime-604800)
+            print(start_time)
+            print(end_time)
+            print(startTime)
+            print(endtime-604800)
             event = await ctx.guild.create_scheduled_event(
                 name=name,
                 description=f"We are testing the creation of event {name}",
@@ -182,9 +186,9 @@ async def reg(ctx: discord.Interaction, ctfid: int):
                 entity_type=discord.EntityType.external,
                 privacy_level=discord.PrivacyLevel.guild_only,
             )
-            await ctx.send(f"Event '{name}' created successfully! Event ID: {event.id}")
+            await LOG_CHANNEL.send(f"Event '{name}' created successfully! Event ID: {event.id}")
         except Exception as e:
-            await ctx.send(f"An error occurred: {str(e)}")
+            await LOG_CHANNEL.send(f"An error occurred: {str(e)}")
 
 #Auto HIDE old CTF
     update = False
