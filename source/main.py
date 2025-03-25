@@ -1,5 +1,6 @@
 import discord
-from discord import app_commands, tasks
+from discord import app_commands
+from discord.ext import tasks
 import os, json, logging, datetime, random
 from time import time
 from typing import Literal
