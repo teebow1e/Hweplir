@@ -268,13 +268,18 @@ async def hidectf(ctx: discord.Interaction):
         ctf_data = json.load(db)
     update = False
     for ctf in ctf_data:
-        
+        logging.info("current time is: " + int(time()))
+        logging.info(ctf)
         if ctf_data[ctf]['archived'] == False:
+            logging.info(f"[{ctf}] archived is False")
             if ctf_data[ctf]['endtime'] < int(time()):
+                logging.info(f"[{ctf}] its endtime is smaller than current time") 
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
                 await cate.set_permissions(ctx.guild.default_role, read_messages=False)
                 ctf_data[ctf]['archived'] = True
                 update = True
+            else:
+                logging.info(f"[{ctf}] its endtime is bigger than current time") 
     if update:
         with open('ctf.json', 'w') as db:
             json.dump(ctf_data, db)
@@ -325,8 +330,6 @@ async def regspecial(ctx: discord.Interaction, name: str, day: int):
 #Auto HIDE old CTF
     update = False
     for ctf in ctf_data:
-        logging.info("current time is: " + int(time()))
-        logging.info(ctf)
         if ctf_data[ctf]['archived'] == False:
             if ctf_data[ctf]['endtime'] < int(time()):
                 cate = discord.utils.get(ctx.guild.categories, id=ctf_data[ctf]['cate'])
