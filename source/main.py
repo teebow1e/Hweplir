@@ -258,7 +258,8 @@ async def regacc(ctx: discord.Interaction, username: str, password: str, cate_id
         if LOG_CHANNELID: 
             log = bot.get_channel(LOG_CHANNELID)
             await log.send("{} has updated login info for ***{}***".format(ctx.user.name, target['name']))
-    except:
+    except Exception as e:
+        print(e)
         await ctx.edit_original_response(embed=Error_embed)
             
 
