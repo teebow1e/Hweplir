@@ -1,0 +1,148 @@
+import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
+import { config } from './config/env';
+import logger from './utils/logger';
+import { handleReady } from './events/ready';
+import { handleButtonInteraction } from './components/buttons';
+import { Command } from './types';
+
+// Import all commands
+import ctInfoFind from './commands/ctftime/info-find';
+import ctInfoOngo from './commands/ctftime/info-ongo';
+import ctInfoUpco from './commands/ctftime/info-upco';
+import ctReg from './commands/ctftime/reg';
+import ctRegacc from './commands/ctftime/regacc';
+import cList from './commands/general/list';
+import cView from './commands/general/view';
+import cWhoami from './commands/general/whoami';
+import adminHide from './commands/admin/hide';
+import adminRegSpecial from './commands/admin/reg-special';
+import adminDelete from './commands/admin/delete';
+import adminAdd from './commands/admin/add';
+
+/**
+ * Extended Client class with commands collection
+ */
+class BotClient extends Client {
+  public commands: Collection<string, Command>;
+
+  constructor() {
+    super({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+      ],
+    });
+    this.commands = new Collection();
+  }
+}
+
+const client = new BotClient();
+
+// Register all commands
+const commands: Command[] = [
+  ctInfoFind,
+  ctInfoOngo,
+  ctInfoUpco,
+  ctReg,
+  ctRegacc,
+  cList,
+  cView,
+  cWhoami,
+  adminHide,
+  adminRegSpecial,
+  adminDelete,
+  adminAdd,
+];
+
+for (const command of commands) {
+  client.commands.set(command.data.name, command);
+}
+
+/**
+ * Register slash commands with Discord
+ */
+async function deployCommands() {
+  try {
+    logger.info('Started refreshing application (/) commands.');
+
+    const rest = new REST({ version: '10' }).setToken(config.BOT_TOKEN);
+
+    const commandData = commands.map((cmd) => cmd.data.toJSON());
+
+    await rest.put(Routes.applicationGuildCommands(client.user!.id, config.SERVER_ID), {
+      body: commandData,
+    });
+
+    logger.info('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    logger.error('Error deploying commands:', error);
+  }
+}
+
+/**
+ * Handle ready event
+ */
+client.once('clientReady', async () => {
+  await handleReady(client);
+  await deployCommands();
+});
+
+/**
+ * Handle interaction create event
+ */
+client.on('interactionCreate', async (interaction) => {
+  try {
+    if (interaction.isChatInputCommand()) {
+      const command = client.commands.get(interaction.commandName);
+
+      if (!command) {
+        logger.warn(`No command matching ${interaction.commandName} was found.`);
+        return;
+      }
+
+      await command.execute(interaction);
+    } else if (interaction.isButton()) {
+      await handleButtonInteraction(interaction);
+    }
+  } catch (error) {
+    logger.error('Error handling interaction:', error);
+
+    if (interaction.isRepliable()) {
+      const errorMessage = { content: 'There was an error executing this command!', ephemeral: true };
+
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(errorMessage);
+      } else {
+        await interaction.reply(errorMessage);
+      }
+    }
+  }
+});
+
+/**
+ * Handle process errors
+ */
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
+  process.exit(1);
+});
+
+/**
+ * Start the bot
+ */
+async function start() {
+  try {
+    await client.login(config.BOT_TOKEN);
+    logger.info('Bot login successful');
+  } catch (error) {
+    logger.error('Failed to login:', error);
+    process.exit(1);
+  }
+}
+
+start();
