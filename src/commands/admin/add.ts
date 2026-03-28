@@ -1,8 +1,8 @@
-import { SlashCommandBuilder, CommandInteraction, TextChannel, CategoryChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel, CategoryChannel } from 'discord.js';
 import { Command } from '../../types';
 import databaseService from '../../services/database.service';
 import discordService from '../../services/discord.service';
-import { loadingEmbed, successEmbed, errorEmbed, warningEmbed } from '../../utils/embed.builder';
+import { successEmbed, errorEmbed, warningEmbed } from '../../utils/embed.builder';
 import logger from '../../utils/logger';
 import { config } from '../../config/env';
 
@@ -19,7 +19,7 @@ const command: Command = {
         .setRequired(false)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       if (!interaction.guild || !interaction.channel) {
         await interaction.reply({ embeds: [errorEmbed('This command must be used in a server')], ephemeral: true });

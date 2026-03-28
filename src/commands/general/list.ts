@@ -1,7 +1,7 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { Command } from '../../types';
 import ctftimeService from '../../services/ctftime.service';
-import { createEmbed, loadingEmbed, errorEmbed } from '../../utils/embed.builder';
+import { createEmbed, errorEmbed } from '../../utils/embed.builder';
 import logger from '../../utils/logger';
 
 const command: Command = {
@@ -29,7 +29,7 @@ const command: Command = {
         .setRequired(false)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       await interaction.deferReply();
 

@@ -1,6 +1,6 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { Command } from '../../types';
-import { loadingEmbed, successEmbed, errorEmbed } from '../../utils/embed.builder';
+import { successEmbed, errorEmbed } from '../../utils/embed.builder';
 import logger from '../../utils/logger';
 
 const command: Command = {
@@ -14,7 +14,7 @@ const command: Command = {
         .setRequired(true)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       if (!interaction.guild) {
         await interaction.reply({ embeds: [errorEmbed('This command must be used in a server')], ephemeral: true });

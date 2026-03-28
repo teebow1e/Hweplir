@@ -9,7 +9,7 @@ import {
 import ctftimeService from '../services/ctftime.service';
 import databaseService from '../services/database.service';
 import discordService from '../services/discord.service';
-import { createEmbed, successEmbed } from '../utils/embed.builder';
+import { createEmbed, successEmbed, errorEmbed, warningEmbed } from '../utils/embed.builder';
 import logger from '../utils/logger';
 import { config } from '../config/env';
 
@@ -50,9 +50,9 @@ export class HideOngoButtons extends ActionRowBuilder<ButtonBuilder> {
  */
 export class UpcomingPaginationButtons extends ActionRowBuilder<ButtonBuilder> {
   constructor(
-    private currentPage: number,
-    private step: number,
-    private totalPages: number
+    currentPage: number,
+    step: number,
+    totalPages: number
   ) {
     super();
 
@@ -77,10 +77,10 @@ export class UpcomingPaginationButtons extends ActionRowBuilder<ButtonBuilder> {
  */
 export class ListPaginationButtons extends ActionRowBuilder<ButtonBuilder> {
   constructor(
-    private order: string,
-    private currentPage: number,
-    private step: number,
-    private totalPages: number
+    order: string,
+    currentPage: number,
+    step: number,
+    totalPages: number
   ) {
     super();
 
@@ -105,9 +105,9 @@ export class ListPaginationButtons extends ActionRowBuilder<ButtonBuilder> {
  */
 export class DeleteConfirmButtons extends ActionRowBuilder<ButtonBuilder> {
   constructor(
-    private ctfName: string,
-    private ctfKey: string,
-    private guild: Guild
+    _ctfName: string,
+    ctfKey: string,
+    _guild: Guild
   ) {
     super();
 
@@ -127,6 +127,29 @@ export class DeleteConfirmButtons extends ActionRowBuilder<ButtonBuilder> {
       .setStyle(ButtonStyle.Secondary);
 
     this.addComponents(deleteAllButton, keepChannelsButton, cancelButton);
+  }
+}
+
+/**
+ * Buttons for terms acceptance confirmation
+ */
+export class TermsAcceptButtons extends ActionRowBuilder<ButtonBuilder> {
+  constructor() {
+    super();
+
+    const agreeButton = new ButtonBuilder()
+      .setCustomId('terms_agree')
+      .setLabel('I Agree')
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('✅');
+
+    const disagreeButton = new ButtonBuilder()
+      .setCustomId('terms_disagree')
+      .setLabel('I Disagree')
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji('❌');
+
+    this.addComponents(agreeButton, disagreeButton);
   }
 }
 
@@ -255,6 +278,68 @@ export async function handleButtonInteraction(interaction: ButtonInteraction) {
         }
 
         logger.info(`User ${interaction.user.tag} deleted CTF (keep channels): ${ctfData.name}`);
+      }
+    }
+
+    // Handle terms acceptance buttons
+    if (customId === 'terms_agree' || customId === 'terms_disagree') {
+      if (!interaction.guild) {
+        await interaction.update({
+          embeds: [errorEmbed('This action must be performed in a server')],
+          components: [],
+        });
+        return;
+      }
+
+      if (customId === 'terms_agree') {
+        try {
+          const member = await interaction.guild.members.fetch(interaction.user.id);
+
+          // Check if user already has the role
+          if (member.roles.cache.has(config.VERIFIED_ROLE_ID)) {
+            await interaction.update({
+              embeds: [warningEmbed('Already Verified', 'You have already accepted the terms and conditions.')],
+              components: [],
+            });
+            return;
+          }
+
+          // Add the verified role
+          const role = interaction.guild.roles.cache.get(config.VERIFIED_ROLE_ID);
+
+          if (!role) {
+            await interaction.update({
+              embeds: [errorEmbed('Verified role not found. Please contact an administrator.')],
+              components: [],
+            });
+            logger.error(`Verified role ${config.VERIFIED_ROLE_ID} not found in guild`);
+            return;
+          }
+
+          await member.roles.add(role.id);
+
+          await interaction.update({
+            embeds: [successEmbed('Welcome! Your role has been added. You will now be able to access server channels.')],
+            components: [],
+          });
+
+        } catch (error) {
+          logger.error('Error adding verified role:', error);
+          await interaction.update({
+            embeds: [errorEmbed('Failed to add role. Please try again or contact an administrator.')],
+            components: [],
+          });
+        }
+      } else if (customId === 'terms_disagree') {
+        await interaction.update({
+          embeds: [
+            warningEmbed(
+              'Terms Not Accepted',
+              'You have declined the terms and conditions. You will not be able to access server channels until you accept them.\n\nYou can run `/verify` again when you are ready to accept.'
+            ),
+          ],
+          components: [],
+        });
       }
     }
   } catch (error) {

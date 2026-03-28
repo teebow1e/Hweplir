@@ -9,7 +9,7 @@ dotenv.config();
  * Validate and export environment configuration
  */
 function validateEnv(): EnvConfig {
-  const requiredVars = ['SERVER_ID', 'BOT_TOKEN', 'VIEW_ALL_CTF_ROLEID'];
+  const requiredVars = ['SERVER_ID', 'BOT_TOKEN', 'VIEW_ALL_CTF_ROLEID', 'VERIFIED_ROLE_ID'];
   const missing: string[] = [];
 
   for (const varName of requiredVars) {
@@ -28,7 +28,9 @@ function validateEnv(): EnvConfig {
     SERVER_ID: process.env.SERVER_ID!,
     BOT_TOKEN: process.env.BOT_TOKEN!,
     VIEW_ALL_CTF_ROLEID: process.env.VIEW_ALL_CTF_ROLEID!,
+    VERIFIED_ROLE_ID: process.env.VERIFIED_ROLE_ID!,
     LOG_CHANNELID: process.env.LOG_CHANNELID,
+    DENY_CTF_ROLEID: process.env.DENY_CTF_ROLEID,
   };
 }
 

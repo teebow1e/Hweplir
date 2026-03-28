@@ -1,7 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import {
   CTFTimeEvent,
-  CTFTimeEventsResponse,
   CTFInfo,
   CTFEmbedData,
   UpcomingCTFsResult,
@@ -11,7 +10,6 @@ import {
 import {
   parseISOToTimestamp,
   calculateEndTime,
-  isLongEvent,
   extractDiscordLink,
   formatCTFFormat,
   getFormatEmoji,

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { Command } from '../../types';
 import ctftimeService from '../../services/ctftime.service';
 import { createEmbed, loadingEmbed, errorEmbed } from '../../utils/embed.builder';
@@ -19,7 +19,7 @@ const command: Command = {
         .setRequired(false)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       // Defer the reply first to give us more time (15 minutes instead of 3 seconds)
       await interaction.deferReply();

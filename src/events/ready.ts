@@ -1,4 +1,4 @@
-import { Client, ActivityType, PresenceUpdateStatus } from 'discord.js';
+import { Client, ActivityType, PresenceUpdateStatus, TextChannel } from 'discord.js';
 import { statuses } from '../data/statuses';
 import databaseService from '../services/database.service';
 import logger from '../utils/logger';
@@ -22,7 +22,7 @@ export async function handleReady(client: Client) {
     try {
       const channel = await client.channels.fetch(config.LOG_CHANNELID);
       if (channel && channel.isTextBased()) {
-        await channel.send('Bot restarted');
+        await (channel as TextChannel).send('Bot restarted');
       }
     } catch (error) {
       logger.warn('Could not send restart message to log channel:', error);

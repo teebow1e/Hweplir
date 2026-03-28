@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Command } from '../../types';
 import databaseService from '../../services/database.service';
 import logger from '../../utils/logger';
@@ -8,7 +8,7 @@ const command: Command = {
     .setName('whoami')
     .setDescription('Display bot information and statistics'),
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       // Get database statistics
       const stats = await databaseService.getStats();

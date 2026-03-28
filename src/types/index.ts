@@ -1,11 +1,13 @@
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 // Environment configuration types
 export interface EnvConfig {
   SERVER_ID: string;
   BOT_TOKEN: string;
   VIEW_ALL_CTF_ROLEID: string;
+  VERIFIED_ROLE_ID: string;
   LOG_CHANNELID?: string;
+  DENY_CTF_ROLEID?: string;
 }
 
 // CTF Database types
@@ -82,7 +84,7 @@ export interface ListCTFsResult {
 // Command types
 export interface Command {
   data: SlashCommandBuilder;
-  execute: (interaction: CommandInteraction) => Promise<void>;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
 // Button interaction custom IDs
