@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, REST, Routes, ChatInputCommandInteraction } from 'discord.js';
 import { config } from './config/env';
 import logger from './utils/logger';
 import { handleReady } from './events/ready';
@@ -14,10 +14,14 @@ import ctRegacc from './commands/ctftime/regacc';
 import cList from './commands/general/list';
 import cView from './commands/general/view';
 import cWhoami from './commands/general/whoami';
+import cVerify from './commands/general/verify';
 import adminHide from './commands/admin/hide';
 import adminRegSpecial from './commands/admin/reg-special';
 import adminDelete from './commands/admin/delete';
 import adminAdd from './commands/admin/add';
+import adminDenyRole from './commands/admin/deny-role';
+import adminVerifyG10 from './commands/admin/verifyg10';
+import adminFix from './commands/admin/fix';
 
 /**
  * Extended Client class with commands collection
@@ -49,10 +53,14 @@ const commands: Command[] = [
   cList,
   cView,
   cWhoami,
+  cVerify,
   adminHide,
   adminRegSpecial,
   adminDelete,
   adminAdd,
+  adminDenyRole,
+  adminVerifyG10,
+  adminFix,
 ];
 
 for (const command of commands) {
@@ -101,7 +109,7 @@ client.on('interactionCreate', async (interaction) => {
         return;
       }
 
-      await command.execute(interaction);
+      await command.execute(interaction as ChatInputCommandInteraction);
     } else if (interaction.isButton()) {
       await handleButtonInteraction(interaction);
     }

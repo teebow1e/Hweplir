@@ -1,8 +1,8 @@
-import { SlashCommandBuilder, CommandInteraction, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 import { Command } from '../../types';
 import databaseService from '../../services/database.service';
 import discordService from '../../services/discord.service';
-import { loadingEmbed, successEmbed, errorEmbed } from '../../utils/embed.builder';
+import { successEmbed, errorEmbed } from '../../utils/embed.builder';
 import logger from '../../utils/logger';
 import { config } from '../../config/env';
 
@@ -21,7 +21,7 @@ const command: Command = {
         .setRequired(true)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       if (!interaction.guild) {
         await interaction.reply({ embeds: [errorEmbed('This command must be used in a server')], ephemeral: true });
@@ -79,7 +79,7 @@ const command: Command = {
 
       if (expiredCTFs.length > 0) {
         for (const ctf of expiredCTFs) {
-          await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate);
+          await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate, ctf.data.channel);
           await databaseService.updateCTF(ctf.key, { archived: true });
         }
 

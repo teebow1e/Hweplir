@@ -1,13 +1,11 @@
-import { SlashCommandBuilder, CommandInteraction, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 import { Command, CTFInfo } from '../../types';
 import ctftimeService from '../../services/ctftime.service';
 import databaseService from '../../services/database.service';
 import discordService from '../../services/discord.service';
-import { createEmbed, loadingEmbed, errorEmbed, successEmbed, warningEmbed } from '../../utils/embed.builder';
+import { createEmbed, errorEmbed, successEmbed, warningEmbed } from '../../utils/embed.builder';
 import logger from '../../utils/logger';
 import { config } from '../../config/env';
-
-const UTC_PLUS_7_TZ = 7 * 60; // UTC+7 in minutes
 
 const command: Command = {
   data: new SlashCommandBuilder()
@@ -20,7 +18,7 @@ const command: Command = {
         .setRequired(true)
     ) as SlashCommandBuilder,
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       if (!interaction.guild) {
         await interaction.reply({ embeds: [errorEmbed('This command must be used in a server')], ephemeral: true });
@@ -144,7 +142,7 @@ const command: Command = {
 /**
  * Auto-hide expired CTFs
  */
-async function autoHideOldCTFs(interaction: CommandInteraction): Promise<void> {
+async function autoHideOldCTFs(interaction: ChatInputCommandInteraction): Promise<void> {
   if (!interaction.guild) return;
 
   const currentTime = Math.floor(Date.now() / 1000);
@@ -152,7 +150,7 @@ async function autoHideOldCTFs(interaction: CommandInteraction): Promise<void> {
 
   if (expiredCTFs.length > 0) {
     for (const ctf of expiredCTFs) {
-      await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate);
+      await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate, ctf.data.channel);
       await databaseService.updateCTF(ctf.key, { archived: true });
     }
 

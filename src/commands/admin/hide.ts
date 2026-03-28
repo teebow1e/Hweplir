@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, TextChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 import { Command } from '../../types';
 import databaseService from '../../services/database.service';
 import discordService from '../../services/discord.service';
@@ -10,7 +10,7 @@ const command: Command = {
     .setName('admin-hide')
     .setDescription('Ẩn các CTF cũ ngay lập tức [autorun cùng /reg]'),
 
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     try {
       if (!interaction.guild) {
         await interaction.reply({ content: 'This command must be used in a server', ephemeral: true });
@@ -36,7 +36,7 @@ const command: Command = {
 
       // Hide expired CTFs
       for (const ctf of expiredCTFs) {
-        await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate);
+        await discordService.archiveCTFCategory(interaction.guild, ctf.data.cate, ctf.data.channel);
         await databaseService.updateCTF(ctf.key, { archived: true });
 
         if (config.LOG_CHANNELID) {

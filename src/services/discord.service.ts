@@ -3,7 +3,6 @@ import {
   CategoryChannel,
   TextChannel,
   Role,
-  PermissionFlagsBits,
   ChannelType,
   GuildScheduledEventCreateOptions,
   GuildScheduledEventEntityType,
@@ -57,6 +56,19 @@ class DiscordService {
         await category.permissionOverwrites.create(viewAllRole, {
           ViewChannel: true,
         });
+      }
+
+      if (config.DENY_CTF_ROLEID) {
+        const denyRole = guild.roles.cache.get(config.DENY_CTF_ROLEID);
+        if (denyRole) {
+          await category.permissionOverwrites.create(denyRole, {
+            ViewChannel: false,
+          });
+        } else {
+          await category.permissionOverwrites.create(config.DENY_CTF_ROLEID, {
+            ViewChannel: false,
+          });
+        }
       }
 
       logger.info(`Created category: ${category.name}`);
@@ -136,6 +148,19 @@ class DiscordService {
         });
       }
 
+      if (config.DENY_CTF_ROLEID) {
+        const denyRole = guild.roles.cache.get(config.DENY_CTF_ROLEID);
+        if (denyRole) {
+          await category.permissionOverwrites.create(denyRole, {
+            ViewChannel: false,
+          });
+        } else {
+          await category.permissionOverwrites.create(config.DENY_CTF_ROLEID, {
+            ViewChannel: false,
+          });
+        }
+      }
+
       logger.info(`Created special category: ${category.name}`);
 
       // Create general channel
@@ -166,7 +191,7 @@ class DiscordService {
   /**
    * Archive CTF category (hide from @everyone)
    */
-  async archiveCTFCategory(guild: Guild, categoryId: string): Promise<boolean> {
+  async archiveCTFCategory(guild: Guild, categoryId: string, infoChannelId?: string): Promise<boolean> {
     try {
       const category = guild.channels.cache.get(categoryId) as CategoryChannel;
 
@@ -178,6 +203,18 @@ class DiscordService {
       await category.permissionOverwrites.create(guild.roles.everyone, {
         ViewChannel: false,
       });
+
+      // Also fix info channel permissions so it doesn't remain visible
+      if (infoChannelId) {
+        const infoChannel = guild.channels.cache.get(infoChannelId) as TextChannel;
+        if (infoChannel) {
+          await infoChannel.permissionOverwrites.create(guild.roles.everyone, {
+            ViewChannel: false,
+            SendMessages: false,
+          });
+          logger.info(`Locked info channel permissions: ${infoChannel.name}`);
+        }
+      }
 
       logger.info(`Archived category: ${category.name}`);
       return true;
@@ -244,7 +281,7 @@ class DiscordService {
   /**
    * Re-list an unlisted category
    */
-  async relistCTFCategory(guild: Guild, categoryId: string, roleName: string): Promise<Role | null> {
+  async relistCTFCategory(guild: Guild, categoryId: string, _roleName: string): Promise<Role | null> {
     try {
       const category = guild.channels.cache.get(categoryId) as CategoryChannel;
 
