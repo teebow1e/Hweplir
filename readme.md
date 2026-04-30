@@ -1,301 +1,176 @@
-# Hweplir - CTF Discord Bot (discord.js)
+# Hweplir
 
-A comprehensive Discord bot for managing CTF (Capture The Flag) competitions, rewritten from Python (discord.py) to TypeScript (discord.js v14).
+Hweplir is a Discord bot for managing CTF participation in one server. It is written in TypeScript with discord.js v14 and stores registered CTF data in a local SQLite database (`ctf.db`).
 
-## Features
+## What the bot does
 
-- 🚩 **CTFtime Integration** - Automatically fetch and display CTF events from CTFtime.org
-- 📅 **Event Management** - Create Discord categories, channels, and scheduled events for CTFs
-- 🔐 **Role-Based Access** - Automatic role creation and permission management
-- 📊 **Team Collaboration** - Dedicated channels for different challenge categories (web, crypto, pwn, etc.)
-- 🗃️ **Database Management** - SQLite3-based storage for CTF tracking with migration from JSON
-- 🔔 **Auto-Archive** - Automatically hide old CTF channels after they end
-- 🎨 **Interactive UI** - Pagination buttons and interactive components
-- 📝 **Logging System** - Structured logging with Winston
-- 📊 **Bot Statistics** - Rich bot information display with `/whoami` command
-
-## Tech Stack
-
-### Core
-- **discord.js v14** - Discord bot framework
-- **TypeScript 5.x** - Type-safe development
-- **Node.js 18+** - Runtime environment
-
-### Dependencies
-- `dotenv` - Environment configuration
-- `winston` - Structured logging
-- `axios` - HTTP requests to CTFtime API
-- `date-fns` - Date manipulation
-- `better-sqlite3` - SQLite3 database for CTF storage
-- `rss-parser` - RSS feed parsing for CTFtime events
-
-## Installation
-
-### Prerequisites
-- Node.js 18 or higher
-- A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
-- A Discord server with appropriate permissions
-
-### Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>`
-   cd Hweplir
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` with your configuration:
-   ```env
-   SERVER_ID=your_server_id
-   BOT_TOKEN=your_bot_token
-   VIEW_ALL_CTF_ROLEID=role_id_for_viewing_all_ctfs
-   LOG_CHANNELID=channel_id_for_logs (optional)
-   ```
-
-4. **Build the project**
-   ```bash
-   npm run build
-   ```
-
-5. **Run the bot**
-   ```bash
-   # Development mode (with auto-reload)
-   npm run dev
-
-   # Production mode
-   npm start
-   ```
-
-## Project Structure
-
-```
-src/
-├── index.ts                  # Bot entry point
-├── config/
-│   └── env.ts               # Environment validation
-├── commands/
-│   ├── ctftime/             # CTFtime commands
-│   │   ├── info-find.ts     # Search CTF by ID/name
-│   │   ├── info-ongo.ts     # View ongoing CTFs
-│   │   ├── info-upco.ts     # View upcoming CTFs
-│   │   ├── reg.ts           # Register new CTF
-│   │   └── regacc.ts        # Update CTF credentials
-│   ├── general/             # General commands
-│   │   ├── list.ts          # List registered CTFs
-│   │   └── view.ts          # Toggle CTF visibility
-│   └── admin/               # Admin commands
-│       ├── hide.ts          # Manually hide old CTFs
-│       ├── reg-special.ts   # Create manual CTF
-│       ├── delete.ts        # Delete CTF
-│       └── add.ts           # Add existing category
-├── events/
-│   └── ready.ts             # Bot ready event
-├── services/
-│   ├── ctftime.service.ts   # CTFtime API logic
-│   ├── database.service.ts  # SQLite3 database handler
-│   └── discord.service.ts   # Discord helper functions
-├── utils/
-│   ├── logger.ts            # Winston logger
-│   ├── embed.builder.ts     # Embed creation
-│   └── helpers.ts           # Utility functions
-├── components/
-│   └── buttons.ts           # Button interactions
-├── types/
-│   └── index.ts             # TypeScript interfaces
-├── data/
-│   └── statuses.ts          # Bot status messages
-└── tests/
-    └── ctftime.test.ts      # CTFtime API tests
-```
+- Fetches CTF event data from CTFtime.
+- Registers a CTF into the Discord server.
+- Creates a Discord category, CTF role, info channel, and challenge channels.
+- Stores CTF metadata, Discord IDs, archive time, and archive state in SQLite.
+- Lists registered CTFs and lets users show or hide CTF channels for themselves.
+- Updates login/account information in a CTF info message.
+- Archives old CTF categories by hiding them after their configured end time.
+- Supports manually-created CTF categories that are not on CTFtime.
+- Provides admin utilities for deleting, importing, fixing, and permission-locking CTF categories.
+- Provides verification commands for server roles.
+- Handles pagination and confirmation buttons for interactive commands.
+- Logs bot activity and errors with Winston.
 
 ## Commands
 
-### CTFtime Commands
+### CTFtime commands
 
-| Command | Description | Parameters |
-|---------|-------------|------------|
-| `/ct-info_find` | Search for CTF by ID or name | `search-key`: CTFtime ID or name |
-| `/ct-info_ongo` | View currently ongoing CTFs | None |
-| `/ct-info_upco` | View upcoming CTFs | `page`, `step` (optional) |
-| `/ct-reg` | Register new CTF from CTFtime | `ctftime-id`: CTF ID |
-| `/ct-regacc` | Update CTF account credentials | `username`, `password`, `cate_id` (optional) |
+| Command | Purpose |
+| --- | --- |
+| `/ct-info_find` | Search CTFtime by event ID or event name. |
+| `/ct-info_ongo` | Show currently ongoing CTFs. |
+| `/ct-info_upco` | Show upcoming CTFs with pagination. |
+| `/ct-reg` | Register a CTF from a CTFtime event ID. |
+| `/ct-regacc` | Update account credentials for a registered CTF. |
 
-### General Commands
+### General commands
 
-| Command | Description | Parameters |
-|---------|-------------|------------|
-| `/c-list` | List all registered CTFs | `order`, `page`, `step` (optional) |
-| `/c-view` | Toggle CTF channel visibility | `ctf-name`: Role to toggle |
-| `/whoami` | Display bot information and statistics | None |
+| Command | Purpose |
+| --- | --- |
+| `/c-list` | List registered CTFs from the local database. |
+| `/c-view` | Toggle access to a registered CTF category by adding/removing its role. |
+| `/whoami` | Show bot information and runtime statistics. |
+| `/enroll-htba` | Enroll for access to BKSEC HTB Academy sharing. |
 
-### Admin Commands
+### Admin commands
 
-| Command | Description | Parameters |
-|---------|-------------|------------|
-| `/admin-hide` | Manually hide old CTFs | None |
-| `/admin-reg_special` | Create manual CTF (not on CTFtime) | `name`, `hide_after` (days) |
-| `/admin-delete` | Delete CTF from server | `search_id`: CTFtime ID or Category ID |
-| `/admin-add` | Add existing category to list | `cate_id` (optional) |
+| Command | Purpose |
+| --- | --- |
+| `/admin-hide` | Archive expired CTF categories immediately. |
+| `/admin-reg_special` | Create a manual CTF category that is not from CTFtime. |
+| `/admin-delete` | Delete a CTF record and optionally its Discord objects. |
+| `/admin-add` | Add an existing Discord category to the CTF database. |
+| `/admin-deny-role` | Deny the configured deny role from viewing existing CTF categories. |
+| `/admin-fix` | Fix archived info-channel permissions. |
+| `/verifyg10` | Verify a user into G10 by changing roles. |
 
-## Testing
+## Runtime requirements
 
-Run the CTFtime API connection and parsing tests:
-
-```bash
-npm test
-```
-
-This will:
-- Test connection to CTFtime API
-- Fetch and parse upcoming CTFs
-- Fetch and parse ongoing CTFs
-- Search for CTFs by name
-- Get specific CTF details
-- Demonstrate all CTFtime service functions
-
-## Migration from Python Version
-
-### Database Migration
-
-The TypeScript version now uses **SQLite3** instead of JSON for better performance and reliability:
-
-- Migration script included to convert existing `ctf.json` to SQLite3
-- Automatic backup of original JSON file
-- All data preserved during migration
-
-### Migration Steps
-
-1. Stop the Python bot
-2. Copy `source/ctf.json` to the project root (if it exists)
-3. Set up `.env` file with same values
-4. Run `npm install && npm run build`
-5. **Migrate database**: `bun run tsx scripts/migrate-to-sqlite.ts`
-6. Start the TypeScript bot with `npm start`
-
-### Key Improvements
-
-1. **SQLite3 Database** - Better performance, ACID compliance, concurrent access
-2. **Commands are the same** - All slash commands work identically
-3. **Improved error handling** - Better try-catch blocks and user feedback
-4. **Structured logging** - Winston with multiple transports
-5. **Type safety** - Full TypeScript definitions prevent runtime errors
-6. **RSS Feed Caching** - Faster responses for ongoing/upcoming CTF queries
-
-See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
-
-## Development
-
-### Code Quality
-
-```bash
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-```
-
-### Environment Setup
+- Bun
+- Dependencies from `package.json`
+- A Discord bot token
+- A Discord server where the bot can manage slash commands, roles, channels, and scheduled events
 
 Required environment variables:
-- `SERVER_ID` - Discord server ID where bot operates
-- `BOT_TOKEN` - Discord bot token
-- `VIEW_ALL_CTF_ROLEID` - Role ID for users who can view all CTFs
-- `LOG_CHANNELID` - (Optional) Channel ID for bot logs
 
-### Best Practices
-
-1. **Type Safety** - Always define proper TypeScript types
-2. **Error Handling** - Use try-catch blocks in all async functions
-3. **Logging** - Use the logger utility for all operations
-4. **Modularity** - Keep services, commands, and utilities separate
-
-## Features in Detail
-
-### CTFtime Integration
-
-- Fetches live data from CTFtime.org API
-- Parses event metadata (dates, format, restrictions)
-- Extracts Discord invite links from descriptions
-- Handles different CTF formats (Jeopardy, Attack-Defense, etc.)
-
-### Automatic Management
-
-- **Auto-create**: Categories, roles, channels when registering CTF
-- **Auto-archive**: Hides CTF channels 1 week after event ends
-- **Auto-permissions**: Sets up proper role-based access control
-
-### Interactive Components
-
-- **Pagination**: Navigate through upcoming CTFs and CTF lists
-- **Filters**: Show/hide long-duration events
-- **Confirmation**: Interactive buttons for dangerous operations
-
-### Logging
-
-Logs are stored in `logs/` directory:
-- `discord.log` - All bot operations
-- `error.log` - Error-level logs only
-- `exceptions.log` - Unhandled exceptions
-- `rejections.log` - Unhandled promise rejections
-
-## Git Configuration
-
-To prevent tracking changes to local database and logs:
-
-```bash
-git update-index --assume-unchanged source/ctf.json
-git update-index --assume-unchanged discord.log
+```env
+SERVER_ID=discord_guild_id
+BOT_TOKEN=discord_bot_token
+VIEW_ALL_CTF_ROLEID=role_that_can_view_all_ctfs
+VERIFIED_ROLE_ID=verified_member_role
 ```
 
-## Contributing
+Optional environment variables:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```env
+LOG_CHANNELID=channel_for_bot_logs
+DENY_CTF_ROLEID=role_blocked_from_ctf_categories
+```
 
-## Troubleshooting
+## Run the bot
 
-### Bot doesn't respond to commands
+```bash
+bun install
+bun run build
+bun start
+```
 
-1. Ensure bot has proper permissions in Discord
-2. Check that SERVER_ID matches your guild
-3. Verify bot token is correct
-4. Check logs in `logs/discord.log`
+Development mode:
 
-### Commands not appearing
+```bash
+bun run dev
+```
 
-1. Wait a few minutes for Discord to sync commands
-2. Try kicking and re-inviting the bot
-3. Check bot has `applications.commands` scope
+Useful scripts:
 
-### Database errors
+```bash
+bun run build   # compile TypeScript to dist/
+bun test        # run the CTFtime service test
+bun run lint    # lint src/
+bun run format  # format src/**/*.ts
+```
 
-1. Ensure `ctf.db` exists (run migration script if needed)
-2. Check file permissions
-3. Review `logs/error.log`
-4. If migrating from JSON, run `bun run tsx scripts/migrate-to-sqlite.ts`
+## Code structure
 
-## License
+```text
+src/
+├── index.ts                  # Creates the Discord client, registers commands, routes interactions
+├── commands/
+│   ├── ctftime/              # Commands backed by CTFtime data
+│   ├── general/              # User-facing server commands
+│   └── admin/                # Admin-only maintenance commands
+├── components/
+│   └── buttons.ts            # Button interaction handlers for pagination and confirmations
+├── config/
+│   └── env.ts                # Environment loading and validation
+├── data/
+│   └── statuses.ts           # Bot status messages
+├── events/
+│   └── ready.ts              # Startup behavior and ready-state handling
+├── services/
+│   ├── ctftime.service.ts    # CTFtime API access, event parsing, search, pagination embeds
+│   ├── database.service.ts   # SQLite schema and CTF CRUD operations
+│   └── discord.service.ts    # Discord roles, channels, categories, events, permissions
+├── tests/
+│   └── ctftime.test.ts       # Manual test script for CTFtime behavior
+├── types/
+│   └── index.ts              # Shared TypeScript interfaces and enums
+└── utils/
+    ├── embed.builder.ts      # Helpers for Discord embeds
+    ├── helpers.ts            # Date, formatting, fuzzy search, pagination helpers
+    └── logger.ts             # Winston logger setup
+```
 
-MIT
+Other important files:
 
-## Support
+```text
+scripts/migrate-to-sqlite.ts  # Migrates old JSON CTF data into ctf.db
+ctf.db                        # Local SQLite database used at runtime
+ctf.json                      # Legacy/source JSON data if present
+logs/                         # Runtime log files
+```
 
-For issues, questions, or contributions, please open an issue on GitHub.
+## Main flow
 
----
+1. `src/index.ts` loads config, creates the Discord client, imports all commands, and registers slash commands for `SERVER_ID`.
+2. A slash command interaction is routed to the matching command object from the command collection.
+3. CTFtime commands use `ctftime.service.ts` to fetch and format CTFtime event data.
+4. Registration commands use `discord.service.ts` to create roles, categories, channels, and scheduled events.
+5. Registration state is saved through `database.service.ts` into `ctf.db`.
+6. Button interactions are handled by `components/buttons.ts` for pagination and delete confirmations.
+7. Logs are written through `utils/logger.ts`.
 
-**Built with ❤️ for the CTF community**
+## Database model
+
+The SQLite database has two main tables:
+
+- `metadata`: stores small bot metadata, currently including the CTF counter.
+- `ctfs`: stores registered CTFs.
+
+Each CTF row stores:
+
+- CTFtime ID
+- Discord role ID
+- Discord category ID
+- CTF display name
+- info message ID
+- main/info channel ID
+- archive timestamp
+- archive state
+- created/updated timestamps
+
+## Notes for code readers
+
+- Commands follow the shared `Command` interface in `src/types/index.ts`: each command exports `data` and `execute`.
+- `src/index.ts` is the command registry. If a command is not imported and added there, Discord will not receive it.
+- `ctftime.service.ts` is responsible for remote CTFtime data and embed content.
+- `discord.service.ts` is responsible for Discord side effects.
+- `database.service.ts` is responsible for persistent local state.
+- `components/buttons.ts` must understand any custom button IDs created by commands or embed builders.
+- Generated JavaScript and declaration files are written to `dist/` by `bun run build`.
