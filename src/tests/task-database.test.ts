@@ -23,7 +23,7 @@ function expectTruthy(value: unknown, message: string): void {
   }
 }
 
-async function runTests(): Promise<void> {
+export async function runTests(): Promise<void> {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'task-db-'));
   process.env.DB_PATH = path.join(tempDir, 'tasks.db');
 
@@ -106,11 +106,13 @@ async function runTests(): Promise<void> {
   }
 }
 
-runTests()
-  .then(() => {
-    console.log('task database tests passed');
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runTests()
+    .then(() => {
+      console.log('task database tests passed');
+    })
+    .catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
+}

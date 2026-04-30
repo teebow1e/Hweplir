@@ -1,6 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { ClubTask, CTFData, TaskCategory, TaskSubmission, TaskWithSubmissions } from '../types';
+import {
+  ClubTask,
+  CTFData,
+  TaskCategory,
+  TaskSubmission,
+  TaskSubmissionHistory,
+  TaskWithSubmissions,
+} from '../types';
 import logger from '../utils/logger';
 
 const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), 'ctf.db');
@@ -414,46 +421,41 @@ class DatabaseService {
     content: string;
   }): Promise<TaskSubmission> {
     try {
-      const existing = this.db
-        .prepare('SELECT * FROM task_submissions WHERE task_id = ? AND user_id = ?')
-        .get(input.taskId, input.userId) as any;
+      const upsertSubmission = this.db.transaction(() => {
+        const existing = this.db
+          .prepare('SELECT * FROM task_submissions WHERE task_id = ? AND user_id = ?')
+          .get(input.taskId, input.userId) as any;
 
-      const upsertExistingSubmission = this.db.transaction((currentSubmission: any) => {
-        this.db
-          .prepare(
-            `INSERT INTO task_submission_history (submission_id, task_id, user_id, username, content)
-             VALUES (?, ?, ?, ?, ?)`
-          )
-          .run(
-            currentSubmission.id,
-            currentSubmission.task_id,
-            currentSubmission.user_id,
-            currentSubmission.username,
-            currentSubmission.content
-          );
-        this.db
-          .prepare(
-            `UPDATE task_submissions
-             SET username = ?, content = ?, updated_at = strftime('%s', 'now')
-             WHERE id = ?`
-          )
-          .run(input.username, input.content, currentSubmission.id);
-        return this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(currentSubmission.id) as any;
-      });
+        if (existing) {
+          this.db
+            .prepare(
+              `INSERT INTO task_submission_history (submission_id, task_id, user_id, username, content)
+               VALUES (?, ?, ?, ?, ?)`
+            )
+            .run(existing.id, existing.task_id, existing.user_id, existing.username, existing.content);
 
-      let row: any;
-      if (existing) {
-        row = upsertExistingSubmission(existing);
-      } else {
+          this.db
+            .prepare(
+              `UPDATE task_submissions
+               SET username = ?, content = ?, updated_at = strftime('%s', 'now')
+               WHERE id = ?`
+            )
+            .run(input.username, input.content, existing.id);
+
+          return this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(existing.id) as any;
+        }
+
         const result = this.db
           .prepare(
             `INSERT INTO task_submissions (task_id, user_id, username, content)
              VALUES (?, ?, ?, ?)`
           )
           .run(input.taskId, input.userId, input.username, input.content);
-        row = this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(result.lastInsertRowid) as any;
-      }
 
+        return this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(result.lastInsertRowid) as any;
+      });
+
+      const row = upsertSubmission();
       if (!row) throw new Error('Inserted submission not found');
       return this.rowToTaskSubmission(row);
     } catch (error) {
@@ -469,16 +471,16 @@ class DatabaseService {
     return rows.map((row) => this.rowToTaskSubmission(row));
   }
 
-  async getTaskSubmissionHistory(submissionId: number): Promise<TaskSubmission[]> {
+  async getTaskSubmissionHistory(submissionId: number): Promise<TaskSubmissionHistory[]> {
     const rows = this.db
       .prepare(
-        `SELECT id, task_id, user_id, username, content, created_at, created_at AS updated_at
+        `SELECT *
          FROM task_submission_history
          WHERE submission_id = ?
          ORDER BY created_at DESC, id DESC`
       )
       .all(submissionId) as any[];
-    return rows.map((row) => this.rowToTaskSubmission(row));
+    return rows.map((row) => this.rowToTaskSubmissionHistory(row));
   }
 
   async revealTask(taskId: number): Promise<ClubTask | null> {
@@ -527,6 +529,18 @@ class DatabaseService {
       content: row.content,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+    };
+  }
+
+  private rowToTaskSubmissionHistory(row: any): TaskSubmissionHistory {
+    return {
+      id: row.id,
+      submissionId: row.submission_id,
+      taskId: row.task_id,
+      userId: row.user_id,
+      username: row.username,
+      content: row.content,
+      createdAt: row.created_at,
     };
   }
 
