@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { CTFData } from '../types';
+import { ClubTask, CTFData, TaskCategory, TaskSubmission, TaskWithSubmissions } from '../types';
 import logger from '../utils/logger';
 
-const DB_PATH = path.join(process.cwd(), 'ctf.db');
+const DB_PATH = process.env.DB_PATH ?? path.join(process.cwd(), 'ctf.db');
 
 /**
  * Database service for managing CTF data using SQLite3
@@ -46,6 +46,49 @@ class DatabaseService {
         CREATE INDEX IF NOT EXISTS idx_cate ON ctfs(cate);
         CREATE INDEX IF NOT EXISTS idx_archived ON ctfs(archived);
         CREATE INDEX IF NOT EXISTS idx_endtime ON ctfs(endtime);
+
+        CREATE TABLE IF NOT EXISTS tasks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          category TEXT NOT NULL CHECK (category IN ('pwn','rev','crypto','all')),
+          requirement TEXT NOT NULL,
+          thread_id TEXT NOT NULL,
+          channel_id TEXT NOT NULL,
+          role_id TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          revealed INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER DEFAULT (strftime('%s','now')),
+          updated_at INTEGER DEFAULT (strftime('%s','now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS task_submissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          task_id INTEGER NOT NULL,
+          user_id TEXT NOT NULL,
+          username TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at INTEGER DEFAULT (strftime('%s','now')),
+          updated_at INTEGER DEFAULT (strftime('%s','now')),
+          UNIQUE(task_id,user_id),
+          FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS task_submission_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          submission_id INTEGER NOT NULL,
+          task_id INTEGER NOT NULL,
+          user_id TEXT NOT NULL,
+          username TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at INTEGER DEFAULT (strftime('%s','now')),
+          FOREIGN KEY(submission_id) REFERENCES task_submissions(id) ON DELETE CASCADE,
+          FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category);
+        CREATE INDEX IF NOT EXISTS idx_tasks_revealed ON tasks(revealed);
+        CREATE INDEX IF NOT EXISTS idx_task_submissions_task_id ON task_submissions(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_submission_history_submission_id ON task_submission_history(submission_id);
       `);
 
       // Initialize counter if not exists
@@ -297,6 +340,183 @@ class DatabaseService {
       logger.error('Failed to get database stats:', error);
       return { totalCTFs: 0, archivedCTFs: 0, activeCTFs: 0, counter: 0 };
     }
+  }
+
+  async createTask(input: {
+    name: string;
+    category: TaskCategory;
+    requirement: string;
+    threadId: string;
+    channelId: string;
+    roleId: string;
+    createdBy: string;
+  }): Promise<ClubTask> {
+    try {
+      const result = this.db
+        .prepare(
+          `INSERT INTO tasks (name, category, requirement, thread_id, channel_id, role_id, created_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          input.name,
+          input.category,
+          input.requirement,
+          input.threadId,
+          input.channelId,
+          input.roleId,
+          input.createdBy
+        );
+      const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid) as any;
+      if (!row) throw new Error('Inserted task not found');
+      logger.info(`Task added to database: ${input.name} (ID: ${result.lastInsertRowid})`);
+      return this.rowToTask(row);
+    } catch (error) {
+      logger.error('Failed to create task:', error);
+      throw new Error('Database write error');
+    }
+  }
+
+  async getTask(taskId: number): Promise<ClubTask | null> {
+    try {
+      const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(taskId) as any;
+      return row ? this.rowToTask(row) : null;
+    } catch (error) {
+      logger.error('Failed to get task:', error);
+      return null;
+    }
+  }
+
+  async getAllTasks(): Promise<ClubTask[]> {
+    const rows = this.db.prepare('SELECT * FROM tasks ORDER BY created_at DESC, id DESC').all() as any[];
+    return rows.map((row) => this.rowToTask(row));
+  }
+
+  async getUnrevealedTasks(): Promise<ClubTask[]> {
+    const rows = this.db
+      .prepare('SELECT * FROM tasks WHERE revealed = 0 ORDER BY created_at DESC, id DESC')
+      .all() as any[];
+    return rows.map((row) => this.rowToTask(row));
+  }
+
+  async getRevealedTasks(): Promise<ClubTask[]> {
+    const rows = this.db
+      .prepare('SELECT * FROM tasks WHERE revealed = 1 ORDER BY created_at DESC, id DESC')
+      .all() as any[];
+    return rows.map((row) => this.rowToTask(row));
+  }
+
+  async upsertTaskSubmission(input: {
+    taskId: number;
+    userId: string;
+    username: string;
+    content: string;
+  }): Promise<TaskSubmission> {
+    try {
+      const existing = this.db
+        .prepare('SELECT * FROM task_submissions WHERE task_id = ? AND user_id = ?')
+        .get(input.taskId, input.userId) as any;
+
+      let submissionId: number | bigint;
+      if (existing) {
+        this.db
+          .prepare(
+            `INSERT INTO task_submission_history (submission_id, task_id, user_id, username, content)
+             VALUES (?, ?, ?, ?, ?)`
+          )
+          .run(existing.id, existing.task_id, existing.user_id, existing.username, existing.content);
+        this.db
+          .prepare(
+            `UPDATE task_submissions
+             SET username = ?, content = ?, updated_at = strftime('%s', 'now')
+             WHERE id = ?`
+          )
+          .run(input.username, input.content, existing.id);
+        submissionId = existing.id;
+      } else {
+        const result = this.db
+          .prepare(
+            `INSERT INTO task_submissions (task_id, user_id, username, content)
+             VALUES (?, ?, ?, ?)`
+          )
+          .run(input.taskId, input.userId, input.username, input.content);
+        submissionId = result.lastInsertRowid;
+      }
+
+      const row = this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(submissionId) as any;
+      if (!row) throw new Error('Inserted submission not found');
+      return this.rowToTaskSubmission(row);
+    } catch (error) {
+      logger.error('Failed to upsert task submission:', error);
+      throw new Error('Database write error');
+    }
+  }
+
+  async getTaskSubmissions(taskId: number): Promise<TaskSubmission[]> {
+    const rows = this.db
+      .prepare('SELECT * FROM task_submissions WHERE task_id = ? ORDER BY updated_at DESC, id DESC')
+      .all(taskId) as any[];
+    return rows.map((row) => this.rowToTaskSubmission(row));
+  }
+
+  async getTaskSubmissionHistory(submissionId: number): Promise<TaskSubmission[]> {
+    const rows = this.db
+      .prepare(
+        `SELECT id, task_id, user_id, username, content, created_at, created_at AS updated_at
+         FROM task_submission_history
+         WHERE submission_id = ?
+         ORDER BY created_at DESC, id DESC`
+      )
+      .all(submissionId) as any[];
+    return rows.map((row) => this.rowToTaskSubmission(row));
+  }
+
+  async revealTask(taskId: number): Promise<ClubTask | null> {
+    try {
+      this.db
+        .prepare("UPDATE tasks SET revealed = 1, updated_at = strftime('%s', 'now') WHERE id = ?")
+        .run(taskId);
+      return this.getTask(taskId);
+    } catch (error) {
+      logger.error('Failed to reveal task:', error);
+      throw new Error('Database write error');
+    }
+  }
+
+  async getTasksWithSubmissions(): Promise<TaskWithSubmissions[]> {
+    const tasks = await this.getAllTasks();
+    const tasksWithSubmissions: TaskWithSubmissions[] = [];
+    for (const task of tasks) {
+      tasksWithSubmissions.push({ ...task, submissions: await this.getTaskSubmissions(task.id) });
+    }
+    return tasksWithSubmissions;
+  }
+
+  private rowToTask(row: any): ClubTask {
+    return {
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      requirement: row.requirement,
+      threadId: row.thread_id,
+      channelId: row.channel_id,
+      roleId: row.role_id,
+      createdBy: row.created_by,
+      revealed: row.revealed === 1,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private rowToTaskSubmission(row: any): TaskSubmission {
+    return {
+      id: row.id,
+      taskId: row.task_id,
+      userId: row.user_id,
+      username: row.username,
+      content: row.content,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
   /**
