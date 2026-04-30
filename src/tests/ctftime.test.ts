@@ -230,13 +230,11 @@ async function runTests() {
   console.log('='.repeat(70) + '\n');
 }
 
-// Run the tests
 runTests()
   .then(() => {
     logger.info('CTFtime tests completed');
-    process.exit(0);
   })
   .catch((error) => {
     logger.error('Test execution failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
   });

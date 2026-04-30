@@ -13,6 +13,7 @@ class DatabaseService {
 
   constructor() {
     this.db = new Database(DB_PATH);
+    this.db.pragma('foreign_keys = ON');
     this.ensureDatabase();
   }
 
@@ -52,7 +53,7 @@ class DatabaseService {
           name TEXT NOT NULL,
           category TEXT NOT NULL CHECK (category IN ('pwn','rev','crypto','all')),
           requirement TEXT NOT NULL,
-          thread_id TEXT NOT NULL,
+          thread_id TEXT NOT NULL UNIQUE,
           channel_id TEXT NOT NULL,
           role_id TEXT NOT NULL,
           created_by TEXT NOT NULL,
@@ -87,6 +88,7 @@ class DatabaseService {
 
         CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category);
         CREATE INDEX IF NOT EXISTS idx_tasks_revealed ON tasks(revealed);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_thread_id_unique ON tasks(thread_id);
         CREATE INDEX IF NOT EXISTS idx_task_submissions_task_id ON task_submissions(task_id);
         CREATE INDEX IF NOT EXISTS idx_task_submission_history_submission_id ON task_submission_history(submission_id);
       `);
@@ -416,22 +418,32 @@ class DatabaseService {
         .prepare('SELECT * FROM task_submissions WHERE task_id = ? AND user_id = ?')
         .get(input.taskId, input.userId) as any;
 
-      let submissionId: number | bigint;
-      if (existing) {
+      const upsertExistingSubmission = this.db.transaction((currentSubmission: any) => {
         this.db
           .prepare(
             `INSERT INTO task_submission_history (submission_id, task_id, user_id, username, content)
              VALUES (?, ?, ?, ?, ?)`
           )
-          .run(existing.id, existing.task_id, existing.user_id, existing.username, existing.content);
+          .run(
+            currentSubmission.id,
+            currentSubmission.task_id,
+            currentSubmission.user_id,
+            currentSubmission.username,
+            currentSubmission.content
+          );
         this.db
           .prepare(
             `UPDATE task_submissions
              SET username = ?, content = ?, updated_at = strftime('%s', 'now')
              WHERE id = ?`
           )
-          .run(input.username, input.content, existing.id);
-        submissionId = existing.id;
+          .run(input.username, input.content, currentSubmission.id);
+        return this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(currentSubmission.id) as any;
+      });
+
+      let row: any;
+      if (existing) {
+        row = upsertExistingSubmission(existing);
       } else {
         const result = this.db
           .prepare(
@@ -439,10 +451,9 @@ class DatabaseService {
              VALUES (?, ?, ?, ?)`
           )
           .run(input.taskId, input.userId, input.username, input.content);
-        submissionId = result.lastInsertRowid;
+        row = this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(result.lastInsertRowid) as any;
       }
 
-      const row = this.db.prepare('SELECT * FROM task_submissions WHERE id = ?').get(submissionId) as any;
       if (!row) throw new Error('Inserted submission not found');
       return this.rowToTaskSubmission(row);
     } catch (error) {
