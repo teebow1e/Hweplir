@@ -1,8 +1,10 @@
 import {
   ActionRowBuilder,
   EmbedBuilder,
+  GuildMember,
   ModalBuilder,
   ModalSubmitInteraction,
+  PermissionFlagsBits,
   StringSelectMenuInteraction,
   TextChannel,
   TextInputBuilder,
@@ -177,5 +179,46 @@ async function handleSubmitModal(interaction: ModalSubmitInteraction): Promise<v
 }
 
 async function handleShowAllSelect(interaction: StringSelectMenuInteraction): Promise<void> {
-  await interaction.update({ content: 'Show-all is not available yet.', components: [] });
+  if (!interaction.guild || !interaction.member) {
+    await interaction.update({ content: 'This command must be used in a server.', components: [] });
+    return;
+  }
+
+  const taskId = Number(interaction.values[0]);
+  const task = await databaseService.getTask(taskId);
+
+  if (!task) {
+    await interaction.update({ content: 'Task not found.', components: [] });
+    return;
+  }
+
+  const member = interaction.member as GuildMember;
+  const isAdmin = member.roles.cache.has(config.ADMIN_ROLE_ID) || member.permissions.has(PermissionFlagsBits.Administrator);
+
+  if (!task.revealed && !isAdmin) {
+    await interaction.update({ content: 'Submissions for this task are not revealed yet.', components: [] });
+    return;
+  }
+
+  const visibleTask = task.revealed ? task : await databaseService.revealTask(task.id);
+  const submissions = await databaseService.getTaskSubmissions(task.id);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`Submissions: ${visibleTask?.name ?? task.name}`)
+    .setColor(0x9b59b6)
+    .setDescription(submissions.length ? null : 'No submissions yet.')
+    .setTimestamp();
+
+  for (const submission of submissions.slice(0, 20)) {
+    embed.addFields({
+      name: submission.username,
+      value: submission.content.slice(0, 1024),
+    });
+  }
+
+  await interaction.update({
+    content: task.revealed ? 'Submissions are visible.' : 'Task submissions are now revealed.',
+    embeds: [embed],
+    components: [],
+  });
 }
