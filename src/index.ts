@@ -22,6 +22,11 @@ import adminAdd from './commands/admin/add';
 import adminDenyRole from './commands/admin/deny-role';
 import adminVerifyG10 from './commands/admin/verifyg10';
 import adminFix from './commands/admin/fix';
+import taskIssue from './commands/tasks/issue-task';
+import taskSubmit from './commands/tasks/submit';
+import taskStatus from './commands/tasks/task-status';
+import taskShowAll from './commands/tasks/show-all';
+import { handleTaskModalInteraction, handleTaskSelectInteraction } from './components/task-interactions';
 
 /**
  * Extended Client class with commands collection
@@ -61,6 +66,10 @@ const commands: Command[] = [
   adminDenyRole,
   adminVerifyG10,
   adminFix,
+  taskIssue,
+  taskSubmit,
+  taskStatus,
+  taskShowAll,
 ];
 
 for (const command of commands) {
@@ -112,6 +121,10 @@ client.on('interactionCreate', async (interaction) => {
       await command.execute(interaction as ChatInputCommandInteraction);
     } else if (interaction.isButton()) {
       await handleButtonInteraction(interaction);
+    } else if (interaction.isStringSelectMenu()) {
+      await handleTaskSelectInteraction(interaction);
+    } else if (interaction.isModalSubmit()) {
+      await handleTaskModalInteraction(interaction);
     }
   } catch (error) {
     logger.error('Error handling interaction:', error);

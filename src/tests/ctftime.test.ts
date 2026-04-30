@@ -14,7 +14,7 @@ import logger from '../utils/logger';
 /**
  * Test CTFtime API connection and data parsing
  */
-async function runTests() {
+export async function runTests() {
   console.log('='.repeat(70));
   console.log();
   console.log('CTFtime API Connection & Parsing Tests');
@@ -230,13 +230,13 @@ async function runTests() {
   console.log('='.repeat(70) + '\n');
 }
 
-// Run the tests
-runTests()
-  .then(() => {
-    logger.info('CTFtime tests completed');
-    process.exit(0);
-  })
-  .catch((error) => {
-    logger.error('Test execution failed:', error);
-    process.exit(1);
-  });
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runTests()
+    .then(() => {
+      logger.info('CTFtime tests completed');
+    })
+    .catch((error) => {
+      logger.error('Test execution failed:', error);
+      process.exitCode = 1;
+    });
+}

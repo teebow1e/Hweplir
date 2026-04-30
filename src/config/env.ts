@@ -9,7 +9,18 @@ dotenv.config();
  * Validate and export environment configuration
  */
 function validateEnv(): EnvConfig {
-  const requiredVars = ['SERVER_ID', 'BOT_TOKEN', 'VIEW_ALL_CTF_ROLEID', 'VERIFIED_ROLE_ID'];
+  const requiredVars = [
+    'SERVER_ID',
+    'BOT_TOKEN',
+    'VIEW_ALL_CTF_ROLEID',
+    'VERIFIED_ROLE_ID',
+    'ADMIN_ROLE_ID',
+    'TASK_ADMIN_CHANNEL_ID',
+    'TASK_ROLE_PWN',
+    'TASK_ROLE_REV',
+    'TASK_ROLE_CRYPTO',
+    'TASK_ROLE_ALL',
+  ];
   const missing: string[] = [];
 
   for (const varName of requiredVars) {
@@ -29,6 +40,12 @@ function validateEnv(): EnvConfig {
     BOT_TOKEN: process.env.BOT_TOKEN!,
     VIEW_ALL_CTF_ROLEID: process.env.VIEW_ALL_CTF_ROLEID!,
     VERIFIED_ROLE_ID: process.env.VERIFIED_ROLE_ID!,
+    ADMIN_ROLE_ID: process.env.ADMIN_ROLE_ID!,
+    TASK_ADMIN_CHANNEL_ID: process.env.TASK_ADMIN_CHANNEL_ID!,
+    TASK_ROLE_PWN: process.env.TASK_ROLE_PWN!,
+    TASK_ROLE_REV: process.env.TASK_ROLE_REV!,
+    TASK_ROLE_CRYPTO: process.env.TASK_ROLE_CRYPTO!,
+    TASK_ROLE_ALL: process.env.TASK_ROLE_ALL!,
     LOG_CHANNELID: process.env.LOG_CHANNELID,
     DENY_CTF_ROLEID: process.env.DENY_CTF_ROLEID,
   };
