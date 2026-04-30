@@ -1,4 +1,8 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
+} from 'discord.js';
 
 // Environment configuration types
 export interface EnvConfig {
@@ -6,6 +10,12 @@ export interface EnvConfig {
   BOT_TOKEN: string;
   VIEW_ALL_CTF_ROLEID: string;
   VERIFIED_ROLE_ID: string;
+  ADMIN_ROLE_ID: string;
+  TASK_ADMIN_CHANNEL_ID: string;
+  TASK_ROLE_PWN: string;
+  TASK_ROLE_REV: string;
+  TASK_ROLE_CRYPTO: string;
+  TASK_ROLE_ALL: string;
   LOG_CHANNELID?: string;
   DENY_CTF_ROLEID?: string;
 }
@@ -21,6 +31,44 @@ export interface CTFData {
   endtime: number;
   archived: boolean;
 }
+
+export type TaskCategory = 'pwn' | 'rev' | 'crypto' | 'all';
+
+export interface ClubTask {
+  id: number;
+  name: string;
+  category: TaskCategory;
+  requirement: string;
+  threadId: string;
+  channelId: string;
+  roleId: string;
+  createdBy: string;
+  revealed: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface TaskSubmission {
+  id: number;
+  taskId: number;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface TaskSubmissionHistory {
+  id: number;
+  submissionId: number;
+  taskId: number;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: number;
+}
+
+export type TaskWithSubmissions = ClubTask & { submissions: TaskSubmission[] };
 
 // CTFtime API response types
 export interface CTFTimeEvent {
@@ -83,7 +131,7 @@ export interface ListCTFsResult {
 
 // Command types
 export interface Command {
-  data: SlashCommandBuilder;
+  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
