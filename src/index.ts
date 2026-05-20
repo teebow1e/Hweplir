@@ -15,6 +15,7 @@ import cList from './commands/general/list';
 import cView from './commands/general/view';
 import cWhoami from './commands/general/whoami';
 import cVerify from './commands/general/verify';
+import cInviteRepoWuGcsb from './commands/general/invite-repo-wu-gcsb';
 import adminHide from './commands/admin/hide';
 import adminRegSpecial from './commands/admin/reg-special';
 import adminDelete from './commands/admin/delete';
@@ -59,6 +60,7 @@ const commands: Command[] = [
   cView,
   cWhoami,
   cVerify,
+  cInviteRepoWuGcsb,
   adminHide,
   adminRegSpecial,
   adminDelete,

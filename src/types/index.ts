@@ -18,6 +18,9 @@ export interface EnvConfig {
   TASK_ROLE_ALL: string;
   LOG_CHANNELID?: string;
   DENY_CTF_ROLEID?: string;
+  GITHUB_TOKEN: string;
+  GH_INVITE_REPO_OWNER: string;
+  GH_INVITE_REPO_NAME: string;
 }
 
 // CTF Database types

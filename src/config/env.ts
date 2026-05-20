@@ -20,6 +20,9 @@ function validateEnv(): EnvConfig {
     'TASK_ROLE_REV',
     'TASK_ROLE_CRYPTO',
     'TASK_ROLE_ALL',
+    'GITHUB_TOKEN',
+    'GH_INVITE_REPO_OWNER',
+    'GH_INVITE_REPO_NAME',
   ];
   const missing: string[] = [];
 
@@ -48,6 +51,9 @@ function validateEnv(): EnvConfig {
     TASK_ROLE_ALL: process.env.TASK_ROLE_ALL!,
     LOG_CHANNELID: process.env.LOG_CHANNELID,
     DENY_CTF_ROLEID: process.env.DENY_CTF_ROLEID,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN!,
+    GH_INVITE_REPO_OWNER: process.env.GH_INVITE_REPO_OWNER!,
+    GH_INVITE_REPO_NAME: process.env.GH_INVITE_REPO_NAME!,
   };
 }
 
