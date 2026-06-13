@@ -23,11 +23,19 @@ import adminAdd from './commands/admin/add';
 import adminDenyRole from './commands/admin/deny-role';
 import adminVerifyG10 from './commands/admin/verifyg10';
 import adminFix from './commands/admin/fix';
-import taskIssue from './commands/tasks/issue-task';
-import taskSubmit from './commands/tasks/submit';
-import taskStatus from './commands/tasks/task-status';
-import taskShowAll from './commands/tasks/show-all';
-import { handleTaskModalInteraction, handleTaskSelectInteraction } from './components/task-interactions';
+// TODO: RE-ENABLE TASK COMMANDS — disabled because required env vars
+// (ADMIN_ROLE_ID, TASK_ADMIN_CHANNEL_ID, TASK_ROLE_*) are not set.
+// To turn back on:
+//   1. Set the task env vars in .env
+//   2. Uncomment the imports below
+//   3. Uncomment the entries in the `commands` array below
+//   4. Uncomment the select-menu / modal handlers in interactionCreate
+//   5. Restore the required-vars list in src/config/env.ts
+// import taskIssue from './commands/tasks/issue-task';
+// import taskSubmit from './commands/tasks/submit';
+// import taskStatus from './commands/tasks/task-status';
+// import taskShowAll from './commands/tasks/show-all';
+// import { handleTaskModalInteraction, handleTaskSelectInteraction } from './components/task-interactions';
 
 /**
  * Extended Client class with commands collection
@@ -68,10 +76,11 @@ const commands: Command[] = [
   adminDenyRole,
   adminVerifyG10,
   adminFix,
-  taskIssue,
-  taskSubmit,
-  taskStatus,
-  taskShowAll,
+  // TODO: RE-ENABLE TASK COMMANDS (see top of file)
+  // taskIssue,
+  // taskSubmit,
+  // taskStatus,
+  // taskShowAll,
 ];
 
 for (const command of commands) {
@@ -123,10 +132,11 @@ client.on('interactionCreate', async (interaction) => {
       await command.execute(interaction as ChatInputCommandInteraction);
     } else if (interaction.isButton()) {
       await handleButtonInteraction(interaction);
-    } else if (interaction.isStringSelectMenu()) {
-      await handleTaskSelectInteraction(interaction);
-    } else if (interaction.isModalSubmit()) {
-      await handleTaskModalInteraction(interaction);
+    // TODO: RE-ENABLE TASK COMMANDS — uncomment these handlers (see top of file)
+    // } else if (interaction.isStringSelectMenu()) {
+    //   await handleTaskSelectInteraction(interaction);
+    // } else if (interaction.isModalSubmit()) {
+    //   await handleTaskModalInteraction(interaction);
     }
   } catch (error) {
     logger.error('Error handling interaction:', error);

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { Command } from '../../types';
 import { errorEmbed, successEmbed, warningEmbed } from '../../utils/embed.builder';
-import { requireRole } from '../../utils/role.guard';
+// import { requireRole } from '../../utils/role.guard';
 import { config } from '../../config/env';
 import githubService from '../../services/github.service';
 import logger from '../../utils/logger';
@@ -28,9 +28,9 @@ const command: Command = {
       return;
     }
 
-    if (!(await requireRole(interaction, config.VERIFIED_ROLE_ID))) {
-      return;
-    }
+    // if (!(await requireRole(interaction, config.VERIFIED_ROLE_ID))) {
+    //   return;
+    // }
 
     await interaction.deferReply({ ephemeral: true });
 
